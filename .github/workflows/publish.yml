@@ -1,0 +1,62 @@
+# Publish to npm on version tags.
+#
+# Tag a release with `git tag v0.4.25 && git push origin v0.4.25` (tag format
+# `v*`). The workflow derives the package version from the tag (strips the
+# leading `v`), runs typecheck, then publishes to the npm registry using the
+# NPM_TOKEN repository secret. `prepack` (pnpm build) runs automatically
+# before publish, so `dist/` is fresh.
+#
+# NOTE: `pnpm test` is deliberately NOT run here — test/index.ts is a live
+# script that connects to a real OneBot/NapCat server (127.0.0.1:4040) and
+# would hang in CI.
+#
+# Setup (one time): GitHub repo → Settings → Secrets and variables →
+# Actions → New repository secret: `NPM_TOKEN` = an npm access token with
+# publish scope (https://www.npmjs.com/settings/<user>/tokens).
+
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Publish
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # The version lives in package.json; the tag must MATCH it. Fail
+          # fast with a clear message instead of rewriting (a rewrite can
+          # silently drop the field via JSON.stringify, which makes pnpm
+          # fail with PACKAGE_VERSION_NOT_FOUND after prepack).
+          node -e "const p=require('./package.json');const tag=process.env.TAG.replace(/^v/,'');if(p.version!==tag){console.error('package.json version '+p.version+' does not match tag '+process.env.TAG+' — bump package.json first, commit, then tag');process.exit(1)}console.log('publishing version:',p.version)"
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          # --no-git-checks: CI checkout may not carry the tag locally, so
+          # pnpm's own tag/version git check is unreliable here; our explicit
+          # match check above is authoritative. prepack runs `pnpm build`.
+          pnpm publish --no-git-checks

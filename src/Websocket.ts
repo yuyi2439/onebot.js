@@ -1,7 +1,7 @@
 import type { WSSendParam } from './Interfaces.js'
-import { NCWebsocketBase } from './NCWebsocketBase.js'
+import { WebsocketBase } from './WebsocketBase.js'
 
-export class NCWebsocket extends NCWebsocketBase {
+export class Websocket extends WebsocketBase {
   /**
    * @onebot11
    * 发送私聊消息
@@ -744,6 +744,14 @@ export class NCWebsocket extends NCWebsocketBase {
    */
   get_friend_msg_history(params: WSSendParam['get_friend_msg_history']) {
     return this.send('get_friend_msg_history', params)
+  }
+
+  /**
+   * @napcat
+   * 获取语音转文字结果
+   */
+  fetch_ptt_text(params: WSSendParam['fetch_ptt_text']) {
+    return this.send('fetch_ptt_text', params)
   }
 
   /**

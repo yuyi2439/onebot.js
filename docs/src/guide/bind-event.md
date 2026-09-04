@@ -72,7 +72,7 @@ function handler(context) {
 }
 
 //            ↓ 还能单独导入SocketHandlers等
-import type { AllHandlers } from 'node-napcat-ts'
+import type { AllHandlers } from 'onebot.js'
 //                 ↓ 手动加上,这样就可以拥有完整的类型检查和提词器
 function handler(context: AllHandlers['message']) {
   console.log(context.message)
@@ -82,7 +82,7 @@ function handler(context: AllHandlers['message']) {
 ## 事件名大全
 
 ::: tip 注意
-如有缺少或类型错误请提交 [pr](https://github.com/HkTeamX/node-napcat-ts/compare)
+如有缺少或类型错误请提交 [pr](https://github.com/yuyi2439/onebot.js/compare)
 :::
 
 以 [NapCatQQ 文档](https://napneko.github.io/develop/event) 为准
@@ -95,7 +95,7 @@ function handler(context: AllHandlers['message']) {
 `message` 可以被 `message.private` 触发
 :::
 
-::: tip node-napcat-ts特有事件
+::: tip onebot.js特有事件
 
 ```ts
 export interface SocketHandler {

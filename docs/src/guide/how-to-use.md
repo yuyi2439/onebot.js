@@ -1,10 +1,10 @@
 # 如何使用
 
-node-napcat-ts 使用 `正向连接` 来连接到 `NapcatQQ`
+onebot.js 使用 `正向连接` 来连接到 `NapcatQQ`
 
 ## 1.初始化SDK
 
-有一个基类 `NCWebsocket` 用于初始化连接参数
+有一个基类 `Websocket` 用于初始化连接参数
 
 我们支持两种连接方式, 根据自己的喜好选择
 
@@ -13,9 +13,9 @@ node-napcat-ts 使用 `正向连接` 来连接到 `NapcatQQ`
 ### 详细配置
 
 ```typescript
-import { NCWebsocket } from 'node-napcat-ts'
+import { Websocket } from 'onebot.js'
 
-const napcat = new NCWebsocket(
+const napcat = new Websocket(
   {
     protocol: 'wss',
     host: 'napcat.example',
@@ -36,9 +36,9 @@ const napcat = new NCWebsocket(
 ### 快速配置
 
 ```typescript
-import { NCWebsocket } from 'node-napcat-ts'
+import { Websocket } from 'onebot.js'
 
-const napcat = new NCWebsocket(
+const napcat = new Websocket(
   {
     baseUrl: 'ws://napcat.example',
     accessToken: 'your token',

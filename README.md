@@ -1,4 +1,7 @@
-# node-napcat-ts
+# onebot.js
+
+> 本项目代码源自 [node-napcat-ts](https://github.com/HkTeamX/node-napcat-ts)（MIT），
+> 在此感谢原作者 [@huankong233](https://github.com/huankong233) 及各位贡献者。
 
 ## 😎 介绍
 
@@ -12,11 +15,3 @@
 - [node-napcat-ts 文档](https://node-napcat-ts.huankong.top) <= 使用前先看我
 - [go-cqhttp 文档](https://docs.go-cqhttp.org/)
 - [onebot11 文档](https://github.com/botuniverse/onebot-11/)
-
-## 🎉 更新日志
-
-[跳转](./CHANGELOG.md)
-
-## ⭐ 星星
-
-[![Stargazers over time](https://starchart.cc/HkTeamX/node-napcat-ts.svg)](https://starchart.cc/HkTeamX/node-napcat-ts)

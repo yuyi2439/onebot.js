@@ -1,7 +1,7 @@
 import 'dotenv/config'
-import { NCWebsocket, NCWebsocketOptions, Structs, type WSSendParam } from '../src/index.js'
+import { Websocket, WebsocketOptions, Structs, type WSSendParam } from '../src/index.js'
 
-const WsConfig: NCWebsocketOptions = {
+const WsConfig: WebsocketOptions = {
   protocol: 'ws',
   host: '127.0.0.1',
   port: 4040,
@@ -12,7 +12,7 @@ const WsConfig: NCWebsocketOptions = {
     delay: 5000,
   },
 }
-const bot = new NCWebsocket(WsConfig, true)
+const bot = new Websocket(WsConfig, true)
 
 bot.on('socket.connecting', function (res) {
   console.log(`连接中#${res.reconnection.nowAttempts}`)

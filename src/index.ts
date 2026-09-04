@@ -1,4 +1,4 @@
-export * from './NCWebsocketApi.js'
+export * from './Websocket.js'
 
 export * from './Interfaces.js'
 export * from './Structs.js'

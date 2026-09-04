@@ -9,15 +9,15 @@ import {
   type RequestHandler,
   type WSReceiveHandler,
 } from './Interfaces.js'
-import type { NCWebsocketBase } from './NCWebsocketBase.js'
+import type { WebsocketBase } from './WebsocketBase.js'
 import type { SendMessageSegment } from './Structs.js'
 import { logger } from './Utils.js'
 
-export class NCEventBus {
+export class EventBus {
   #events = new Map<EventKey, EventHandleMap[EventKey][]>()
-  #ws: NCWebsocketBase
+  #ws: WebsocketBase
 
-  constructor(ws: NCWebsocketBase) {
+  constructor(ws: WebsocketBase) {
     this.#ws = ws
   }
 
@@ -104,7 +104,7 @@ export class NCEventBus {
         this.notice(json)
         break
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown post_type: ${post_type}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown post_type: ${post_type}`)
         return false
     }
 
@@ -120,7 +120,7 @@ export class NCEventBus {
       case 'heartbeat':
         return this.emit('meta_event.heartbeat', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown meta_event_type: ${meta_event_type}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown meta_event_type: ${meta_event_type}`)
         return false
     }
   }
@@ -137,7 +137,7 @@ export class NCEventBus {
         return this.emit('meta_event.lifecycle.disable', json)
       default:
         logger.warn(
-          '[node-napcat-ts]',
+          '[onebot.js]',
           '[eventBus]',
           `unknown meta_event.lifecycle_type: ${subType}`,
         )
@@ -153,7 +153,7 @@ export class NCEventBus {
       case 'group':
         return this.message_group(json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown message_type: ${messageType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown message_type: ${messageType}`)
         return false
     }
   }
@@ -169,7 +169,7 @@ export class NCEventBus {
       case 'friend':
         return this.emit('message.private.friend', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown message_private_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown message_private_type: ${subType}`)
         return false
     }
   }
@@ -183,7 +183,7 @@ export class NCEventBus {
       case 'normal':
         return this.emit('message.group.normal', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown message_group_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown message_group_type: ${subType}`)
         return false
     }
   }
@@ -196,7 +196,7 @@ export class NCEventBus {
       case 'group':
         return this.message_sent_group(json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown message_sent_type: ${messageType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown message_sent_type: ${messageType}`)
         return false
     }
   }
@@ -210,7 +210,7 @@ export class NCEventBus {
         return this.emit('message_sent.private.friend', json)
       default:
         logger.warn(
-          '[node-napcat-ts]',
+          '[onebot.js]',
           '[eventBus]',
           `unknown message_sent_private_type: ${subType}`,
         )
@@ -224,7 +224,7 @@ export class NCEventBus {
       case 'normal':
         return this.emit('message_sent.group.normal', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown message_sent_group_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown message_sent_group_type: ${subType}`)
         return false
     }
   }
@@ -239,7 +239,7 @@ export class NCEventBus {
       case 'group':
         return this.request_group(json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown request_type: ${request_type}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown request_type: ${request_type}`)
         return false
     }
   }
@@ -255,7 +255,7 @@ export class NCEventBus {
       case 'invite':
         return this.emit('request.group.invite', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown request_group_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown request_group_type: ${subType}`)
         return false
     }
   }
@@ -290,7 +290,7 @@ export class NCEventBus {
       case 'group_msg_emoji_like':
         return this.emit('notice.group_msg_emoji_like', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown notice_type: ${notice_type}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown notice_type: ${notice_type}`)
         return false
     }
   }
@@ -303,7 +303,7 @@ export class NCEventBus {
       case 'unset':
         return this.emit('notice.group_admin.unset', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown notice_group_admin_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown notice_group_admin_type: ${subType}`)
         return false
     }
   }
@@ -316,7 +316,7 @@ export class NCEventBus {
       case 'lift_ban':
         return this.emit('notice.group_ban.lift_ban', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown notice_group_ban_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown notice_group_ban_type: ${subType}`)
         return false
     }
   }
@@ -332,7 +332,7 @@ export class NCEventBus {
         return this.emit('notice.group_decrease.kick_me', json)
       default:
         logger.warn(
-          '[node-napcat-ts]',
+          '[onebot.js]',
           '[eventBus]',
           `unknown notice_group_decrease_type: ${subType}`,
         )
@@ -349,7 +349,7 @@ export class NCEventBus {
         return this.emit('notice.group_increase.invite', json)
       default:
         logger.warn(
-          '[node-napcat-ts]',
+          '[onebot.js]',
           '[eventBus]',
           `unknown notice_group_increase_type: ${subType}`,
         )
@@ -365,7 +365,7 @@ export class NCEventBus {
       case 'delete':
         return this.emit('notice.essence.delete', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown notice_essence_type: ${subType}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown notice_essence_type: ${subType}`)
         return false
     }
   }
@@ -384,7 +384,7 @@ export class NCEventBus {
       case 'profile_like':
         return this.emit('notice.notify.profile_like', json)
       default:
-        logger.warn('[node-napcat-ts]', '[eventBus]', `unknown notice_notify_type: ${sub_type}`)
+        logger.warn('[onebot.js]', '[eventBus]', `unknown notice_notify_type: ${sub_type}`)
         return false
     }
   }

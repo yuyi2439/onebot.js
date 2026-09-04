@@ -1,2 +1,5 @@
 packages:
   - docs
+allowBuilds:
+  esbuild: true
+  vue-demi: true

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export const shared = defineConfig({
-  title: 'node-napcat-ts',
+  title: 'onebot.js',
 
   lastUpdated: true,
   cleanUrls: true,
@@ -20,7 +20,8 @@ export const shared = defineConfig({
   },
 
   sitemap: {
-    hostname: 'https://node-napcat-ts.huankong.top',
+    // 部署文档站后改成实际域名
+    // hostname: 'https://<your-docs-domain>',
     transformItems(items) {
       return items.filter((item) => !item.url.includes('migration'))
     },
@@ -49,6 +50,6 @@ export const shared = defineConfig({
     search: {
       provider: 'local',
     },
-    socialLinks: [{ icon: 'github', link: 'https://github.com/HkTeamX/node-napcat-ts' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/yuyi2439/onebot.js' }],
   },
 })

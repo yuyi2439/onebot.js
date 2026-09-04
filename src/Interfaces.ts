@@ -1,6 +1,6 @@
 import { NodeSegment, Receive, SendMessageSegment } from './Structs.js'
 
-export interface NCWebsocketOptionsBaseUrl {
+export interface WebsocketOptionsBaseUrl {
   baseUrl: string
   accessToken?: string
   reconnection?: {
@@ -11,7 +11,7 @@ export interface NCWebsocketOptionsBaseUrl {
   apiTimeout?: number
 }
 
-export interface NCWebsocketOptionsHost {
+export interface WebsocketOptionsHost {
   protocol: 'ws' | 'wss'
   host: string
   port: number
@@ -24,7 +24,7 @@ export interface NCWebsocketOptionsHost {
   apiTimeout?: number
 }
 
-export type NCWebsocketOptions = NCWebsocketOptionsBaseUrl | NCWebsocketOptionsHost
+export type WebsocketOptions = WebsocketOptionsBaseUrl | WebsocketOptionsHost
 
 // =====================================================================================
 
@@ -769,7 +769,7 @@ export type WSSendParam = {
   send_group_msg: { group_id: number; message: SendMessageSegment[] }
   send_msg: ({ user_id: number } | { group_id: number }) & { message: SendMessageSegment[] }
   delete_msg: { message_id: number }
-  get_msg: { message_id: number }
+  get_msg: { message_id: number | string }
   get_forward_msg: { message_id: string }
   send_like: { user_id: number; times?: number }
   set_group_kick: { group_id: number; user_id: number; reject_add_request?: boolean }
@@ -924,6 +924,7 @@ export type WSSendParam = {
     count?: number
     reverseOrder?: boolean
   }
+  fetch_ptt_text: { message_id: number | string }
   create_collection: { rawData: string; brief: string }
   get_collection_list: { category: number; count?: number }
   set_self_longnick: { longNick: string }
@@ -1533,6 +1534,7 @@ export type WSSendReturn = {
   mark_private_msg_as_read: null
   mark_group_msg_as_read: null
   get_friend_msg_history: { messages: WSSendReturn['get_msg'][] }
+  fetch_ptt_text: { text: string }
   create_collection: { result: 0; errMsg: string }
   get_collection_list: {
     result: 0

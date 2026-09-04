@@ -12,7 +12,7 @@ export const zh = defineConfig({
     },
 
     editLink: {
-      pattern: 'https://github.com/HkTeamX/node-napcat-ts/edit/main/docs/:path',
+      pattern: 'https://github.com/yuyi2439/onebot.js/edit/main/docs/:path',
       text: '在 GitHub 上编辑此页面',
     },
 
@@ -63,7 +63,7 @@ function sidebarGuide(): DefaultTheme.SidebarItem[] {
       text: '简介',
       collapsed: false,
       items: [
-        { text: '什么是 node-napcat-ts', link: 'what-is-node-napcat-ts' },
+        { text: '什么是 onebot.js', link: 'what-is-onebot-js' },
         { text: '快速开始', link: 'getting-started' },
         { text: '如何使用', link: 'how-to-use' },
         { text: '绑定事件', link: 'bind-event' },

@@ -5,16 +5,16 @@ import type {
   EventHandleMap,
   EventKey,
   HandlerResMap,
-  NCWebsocketOptions,
+  WebsocketOptions,
   ResponseHandler,
   WSReconnection,
   WSSendParam,
   WSSendReturn,
 } from './Interfaces.js'
-import { NCEventBus } from './NCEventBus.js'
+import { EventBus } from './EventBus.js'
 import { convertCQCodeToJSON, CQCodeDecode, logger } from './Utils.js'
 
-export class NCWebsocketBase {
+export class WebsocketBase {
   #debug: boolean
 
   #baseUrl: string
@@ -23,37 +23,37 @@ export class NCWebsocketBase {
   #socket?: WebSocket
   #apiTimeout: number
 
-  #eventBus: NCEventBus
+  #eventBus: EventBus
   #echoMap: Map<string, ResponseHandler>
   #connectingPromise?: Promise<void>
   #reconnectTimer?: ReturnType<typeof setTimeout>
   #disconnected: boolean
 
-  constructor(NCWebsocketOptions: NCWebsocketOptions, debug = false) {
-    this.#accessToken = NCWebsocketOptions.accessToken ?? ''
+  constructor(WebsocketOptions: WebsocketOptions, debug = false) {
+    this.#accessToken = WebsocketOptions.accessToken ?? ''
 
-    if ('baseUrl' in NCWebsocketOptions) {
-      this.#baseUrl = NCWebsocketOptions.baseUrl
+    if ('baseUrl' in WebsocketOptions) {
+      this.#baseUrl = WebsocketOptions.baseUrl
     } else if (
-      'protocol' in NCWebsocketOptions &&
-      'host' in NCWebsocketOptions &&
-      'port' in NCWebsocketOptions
+      'protocol' in WebsocketOptions &&
+      'host' in WebsocketOptions &&
+      'port' in WebsocketOptions
     ) {
-      const { protocol, host, port } = NCWebsocketOptions
+      const { protocol, host, port } = WebsocketOptions
       this.#baseUrl = protocol + '://' + host + ':' + port
     } else {
       throw new Error(
-        'NCWebsocketOptions must contain either "protocol && host && port" or "baseUrl"',
+        'WebsocketOptions must contain either "protocol && host && port" or "baseUrl"',
       )
     }
 
     // 整理重连参数
-    const { enable = true, attempts = 10, delay = 5000 } = NCWebsocketOptions.reconnection ?? {}
+    const { enable = true, attempts = 10, delay = 5000 } = WebsocketOptions.reconnection ?? {}
     this.#reconnection = { enable, attempts, delay, nowAttempts: 1 }
 
-    this.#apiTimeout = NCWebsocketOptions.apiTimeout ?? 2 * 60 * 1000
+    this.#apiTimeout = WebsocketOptions.apiTimeout ?? 2 * 60 * 1000
     this.#debug = debug
-    this.#eventBus = new NCEventBus(this)
+    this.#eventBus = new EventBus(this)
     this.#echoMap = new Map()
     this.#disconnected = false
   }
@@ -164,7 +164,7 @@ export class NCWebsocketBase {
 
       // 检查数据是否看起来像有效的JSON (以 { 或 [ 开头)
       if (!(strData.trim().startsWith('{') || strData.trim().startsWith('['))) {
-        logger.warn('[node-napcat-ts]', '[socket]', 'received non-JSON data:', strData)
+        logger.warn('[onebot.js]', '[socket]', 'received non-JSON data:', strData)
         return
       }
 
@@ -181,7 +181,7 @@ export class NCWebsocketBase {
       }
 
       if (this.#debug) {
-        logger.debug('[node-napcat-ts]', '[socket]', 'receive data')
+        logger.debug('[onebot.js]', '[socket]', 'receive data')
         logger.dir(json)
       }
 
@@ -189,7 +189,11 @@ export class NCWebsocketBase {
         const handler = this.#echoMap.get(json.echo)
 
         if (handler) {
-          if (json.retcode === 0) {
+          // OneBot 11 实现端行为不一：NapCat 总是回数值 `retcode`，
+          // 而 LLOnebot 等实现可能只回 `status: "ok"` 不带 `retcode`。
+          // 成功判定：`retcode === 0`，或缺 `retcode` 时 `status === "ok"`。
+          const ok = json.retcode === 0 || (json.retcode == null && json.status === 'ok')
+          if (ok) {
             this.#eventBus.emit('api.response.success', json)
             handler.onSuccess(json)
           } else {
@@ -219,7 +223,7 @@ export class NCWebsocketBase {
         this.#eventBus.parseMessage(json)
       }
     } catch (error) {
-      logger.warn('[node-napcat-ts]', '[socket]', 'failed to parse JSON')
+      logger.warn('[onebot.js]', '[socket]', 'failed to parse JSON')
       logger.dir(error)
       return
     }
@@ -242,7 +246,7 @@ export class NCWebsocketBase {
     }
 
     if (this.#debug) {
-      logger.debug('[node-open-napcat] send request')
+      logger.debug('[onebot.js] send request')
       logger.dir(message)
     }
 

@@ -1,7 +1,7 @@
 {
-  "name": "node-napcat-ts",
-  "version": "0.4.25",
-  "description": "napcat SDK for Node",
+  "name": "onebot.js",
+  "version": "0.1.0",
+  "description": "onebot SDK for Node",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -37,34 +37,29 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HkTeamX/node-napcat-ts.git"
+    "url": "git+https://github.com/yuyi2439/onebot.js.git"
   },
   "scripts": {
     "build": "tsc",
     "dev": "nodemon",
     "test": "tsx test/index.ts",
     "typecheck": "tsc --noEmit",
+    "prepack": "pnpm build",
     "docs:dev": "pnpm -C docs run dev",
     "docs:build": "pnpm -C docs run build",
     "docs:preview": "pnpm -C docs run preview"
   },
   "dependencies": {
     "isomorphic-ws": "^5.0.0",
-    "nanoid": "^5.1.5",
+    "nanoid": "^6.0.0",
     "ws": "^8.18.2"
   },
   "devDependencies": {
-    "@types/node": "^22.15.19",
+    "@types/node": "^24.0.0",
     "@types/ws": "^8.18.1",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.0.0",
     "nodemon": "^3.1.10",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "vue-demi"
-    ]
+    "typescript": "^7.0.0"
   }
 }
