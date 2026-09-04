@@ -1,5 +1,5 @@
-export * from './Websocket.js'
+export * from './client.js'
 
-export * from './Interfaces.js'
-export * from './Structs.js'
-export * from './Utils.js'
+export * from './interfaces.js'
+export * from './structs.js'
+export * from './utils.js'

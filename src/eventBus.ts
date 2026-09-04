@@ -8,16 +8,16 @@ import {
   type NoticeHandler,
   type RequestHandler,
   type WSReceiveHandler,
-} from './Interfaces.js'
-import type { WebsocketBase } from './WebsocketBase.js'
-import type { SendMessageSegment } from './Structs.js'
-import { logger } from './Utils.js'
+} from './interfaces.js'
+import type { OneBotClientBase } from './clientBase.js'
+import type { SendMessageSegment } from './structs.js'
+import { logger } from './utils.js'
 
 export class EventBus {
   #events = new Map<EventKey, EventHandleMap[EventKey][]>()
-  #ws: WebsocketBase
+  #ws: OneBotClientBase
 
-  constructor(ws: WebsocketBase) {
+  constructor(ws: OneBotClientBase) {
     this.#ws = ws
   }
 

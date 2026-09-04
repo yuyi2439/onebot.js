@@ -4,7 +4,8 @@ onebot.js 使用 `正向连接` 来连接到 `NapcatQQ`
 
 ## 1.初始化SDK
 
-有一个基类 `Websocket` 用于初始化连接参数
+`connect` 建立正向连接：**连接成功后才返回 `OneBotClient` 对象**；按
+`reconnection` 的预算自动重试，全部失败会直接抛出异常，由调用者处理
 
 我们支持两种连接方式, 根据自己的喜好选择
 
@@ -13,9 +14,9 @@ onebot.js 使用 `正向连接` 来连接到 `NapcatQQ`
 ### 详细配置
 
 ```typescript
-import { Websocket } from 'onebot.js'
+import { connect } from 'onebot.js'
 
-const napcat = new Websocket(
+const napcat = await connect(
   {
     protocol: 'wss',
     host: 'napcat.example',
@@ -36,9 +37,9 @@ const napcat = new Websocket(
 ### 快速配置
 
 ```typescript
-import { Websocket } from 'onebot.js'
+import { connect } from 'onebot.js'
 
-const napcat = new Websocket(
+const napcat = await connect(
   {
     baseUrl: 'ws://napcat.example',
     accessToken: 'your token',
@@ -58,15 +59,11 @@ const napcat = new Websocket(
 
 请查看 [绑定事件](./bind-event.md)
 
-## 3.连接
+## 3.连接管理
+
+连接已由 `connect` 完成；对象上仍有手动管理方法：
 
 ```typescript
-// 正常连接
-napcat.connect()
-
-// 可追加 await 以在连接成功后往后运行
-await napcat.connect()
-
 // 断开连接
 napcat.disconnect()
 

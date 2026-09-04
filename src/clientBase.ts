@@ -5,16 +5,45 @@ import type {
   EventHandleMap,
   EventKey,
   HandlerResMap,
-  WebsocketOptions,
+  OneBotClientOptions,
+  OneBotLog,
   ResponseHandler,
   WSReconnection,
   WSSendParam,
   WSSendReturn,
-} from './Interfaces.js'
-import { EventBus } from './EventBus.js'
-import { convertCQCodeToJSON, CQCodeDecode, logger } from './Utils.js'
+} from './interfaces.js'
+import { EventBus } from './eventBus.js'
+import { convertCQCodeToJSON, CQCodeDecode, logger } from './utils.js'
 
-export class WebsocketBase {
+/**
+ * One failed OneBot action call. `send()` always rejects with this class, so
+ * consumers get a proper `Error` with a readable message
+ * (`action failed: status=… retcode=…`) plus the full response envelope for
+ * programmatic access.
+ */
+export class OnebotApiError extends Error {
+  /** The action name that failed. */
+  readonly action: string
+  /** The raw response envelope (status/retcode/data/message/echo). */
+  readonly response: Record<string, unknown>
+
+  constructor(action: string, response: Record<string, unknown>) {
+    const status = response.status ?? 'unknown'
+    const retcode = response.retcode ?? 'unknown'
+    const data = response.data as { message?: unknown; error?: unknown } | undefined
+    const inner = data && (data.message || data.error) ? `, detail=${JSON.stringify(data.message ?? data.error)}` : ''
+    const message
+      = !inner && typeof response.message === 'string' && response.message
+        ? `, message=${response.message}`
+        : ''
+    super(`${action} failed: status=${status} retcode=${retcode}${inner}${message}`)
+    this.name = 'OnebotApiError'
+    this.action = action
+    this.response = response
+  }
+}
+
+export class OneBotClientBase {
   #debug: boolean
 
   #baseUrl: string
@@ -22,6 +51,7 @@ export class WebsocketBase {
   #reconnection: WSReconnection
   #socket?: WebSocket
   #apiTimeout: number
+  #log: OneBotLog | undefined
 
   #eventBus: EventBus
   #echoMap: Map<string, ResponseHandler>
@@ -29,30 +59,31 @@ export class WebsocketBase {
   #reconnectTimer?: ReturnType<typeof setTimeout>
   #disconnected: boolean
 
-  constructor(WebsocketOptions: WebsocketOptions, debug = false) {
-    this.#accessToken = WebsocketOptions.accessToken ?? ''
+  constructor(OneBotClientOptions: OneBotClientOptions, debug = false) {
+    this.#accessToken = OneBotClientOptions.accessToken ?? ''
 
-    if ('baseUrl' in WebsocketOptions) {
-      this.#baseUrl = WebsocketOptions.baseUrl
+    if ('baseUrl' in OneBotClientOptions) {
+      this.#baseUrl = OneBotClientOptions.baseUrl
     } else if (
-      'protocol' in WebsocketOptions &&
-      'host' in WebsocketOptions &&
-      'port' in WebsocketOptions
+      'protocol' in OneBotClientOptions &&
+      'host' in OneBotClientOptions &&
+      'port' in OneBotClientOptions
     ) {
-      const { protocol, host, port } = WebsocketOptions
+      const { protocol, host, port } = OneBotClientOptions
       this.#baseUrl = protocol + '://' + host + ':' + port
     } else {
       throw new Error(
-        'WebsocketOptions must contain either "protocol && host && port" or "baseUrl"',
+        'OneBotClientOptions must contain either "protocol && host && port" or "baseUrl"',
       )
     }
 
     // 整理重连参数
-    const { enable = true, attempts = 10, delay = 5000 } = WebsocketOptions.reconnection ?? {}
+    const { enable = true, attempts = 10, delay = 5000 } = OneBotClientOptions.reconnection ?? {}
     this.#reconnection = { enable, attempts, delay, nowAttempts: 1 }
 
-    this.#apiTimeout = WebsocketOptions.apiTimeout ?? 2 * 60 * 1000
+    this.#apiTimeout = OneBotClientOptions.apiTimeout ?? 2 * 60 * 1000
     this.#debug = debug
+    this.#log = OneBotClientOptions.log
     this.#eventBus = new EventBus(this)
     this.#echoMap = new Map()
     this.#disconnected = false
@@ -80,6 +111,7 @@ export class WebsocketBase {
 
       this.#socket.onopen = () => {
         this.#eventBus.emit('socket.open', { reconnection: this.#reconnection })
+        this.#log?.info?.(`onebot: connected to ${this.#baseUrl}`)
 
         this.#reconnection.nowAttempts = 1
         this.#connectingPromise = undefined
@@ -96,11 +128,29 @@ export class WebsocketBase {
 
         if (this.#disconnected) return
 
+        // 断开/重连会丢掉在途的请求：立即以连接关闭失败它们，
+        // 而不是让调用者等满 apiTimeout。
+        for (const pending of this.#echoMap.values()) {
+          clearTimeout(pending.timeoutTimer)
+          pending.onFailure({
+            status: 'failed',
+            retcode: -1,
+            data: null,
+            message: 'connection closed',
+            echo: pending.message.echo,
+          })
+        }
+        this.#echoMap.clear()
+
         if (
           this.#reconnection.enable &&
           this.#reconnection.nowAttempts < this.#reconnection.attempts
         ) {
           this.#reconnection.nowAttempts++
+          this.#log?.warn?.(
+            `onebot: disconnected; retrying in ${this.#reconnection.delay}ms `
+              + `(attempt ${this.#reconnection.nowAttempts}/${this.#reconnection.attempts})`,
+          )
 
           clearTimeout(this.#reconnectTimer)
           this.#reconnectTimer = setTimeout(async () => {
@@ -155,6 +205,31 @@ export class WebsocketBase {
   async reconnect() {
     await this.disconnect()
     return await this.connect()
+  }
+
+  /** Whether the underlying socket is currently open. */
+  get connected(): boolean {
+    return this.#socket?.readyState === WebSocket.OPEN
+  }
+
+  /**
+   * 发送 API 请求并等待结果，失败时抛出携带提示的可读错误。
+   *
+   * 与 {@linkcode send} 的区别：`send` 失败时 reject 原始的
+   * {@linkcode OnebotApiError}；`invoke` 在其 `message` 后附加
+   * `options.hint`（例如兼容性说明），适合直接展示给最终读者。
+   */
+  async invoke<K extends keyof WSSendParam>(
+    method: K,
+    params: WSSendParam[K],
+    options: { hint?: string } = {},
+  ): Promise<WSSendReturn[K]> {
+    try {
+      return await this.send(method, params)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new Error(`${message}${options.hint ? ` — ${options.hint}` : ''}`)
+    }
   }
 
   async #message(data: Data) {
@@ -260,7 +335,7 @@ export class WebsocketBase {
       const onFailure = (reason: any) => {
         this.#echoMap.delete(echo)
         clearTimeout(timeoutTimer)
-        return reject(reason)
+        return reject(new OnebotApiError(String(message.action), reason ?? {}))
       }
 
       const timeoutTimer = setTimeout(() => {

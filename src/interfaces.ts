@@ -1,6 +1,17 @@
-import { NodeSegment, Receive, SendMessageSegment } from './Structs.js'
+import { NodeSegment, Receive, SendMessageSegment } from './structs.js'
 
-export interface WebsocketOptionsBaseUrl {
+/**
+ * 最小日志接口：与 cordis 等宿主的 logger 形状兼容，四个方法都可省略。
+ * 连接生命周期告警（重连调度等）会走到这里；未提供时使用内置 logger。
+ */
+export interface OneBotLog {
+  info?: (...args: unknown[]) => void
+  warn?: (...args: unknown[]) => void
+  debug?: (...args: unknown[]) => void
+  error?: (...args: unknown[]) => void
+}
+
+export interface OneBotClientOptionsBaseUrl {
   baseUrl: string
   accessToken?: string
   reconnection?: {
@@ -9,9 +20,11 @@ export interface WebsocketOptionsBaseUrl {
     delay?: number
   }
   apiTimeout?: number
+  /** 连接生命周期日志（重连调度、连接成功等）；省略时使用内置 logger。 */
+  log?: OneBotLog
 }
 
-export interface WebsocketOptionsHost {
+export interface OneBotClientOptionsHost {
   protocol: 'ws' | 'wss'
   host: string
   port: number
@@ -22,9 +35,11 @@ export interface WebsocketOptionsHost {
     delay?: number
   }
   apiTimeout?: number
+  /** 连接生命周期日志（重连调度、连接成功等）；省略时使用内置 logger。 */
+  log?: OneBotLog
 }
 
-export type WebsocketOptions = WebsocketOptionsBaseUrl | WebsocketOptionsHost
+export type OneBotClientOptions = OneBotClientOptionsBaseUrl | OneBotClientOptionsHost
 
 // =====================================================================================
 
@@ -101,10 +116,10 @@ export interface APISuccessResponse<T extends keyof WSSendReturn> {
 
 export interface APIErrorResponse {
   status: 'failed'
-  retcode: 0
+  retcode: number
   data: null
   message: string // 信息
-  wording: string
+  wording?: string
   echo: string
 }
 

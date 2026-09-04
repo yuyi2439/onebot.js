@@ -1,18 +1,21 @@
 import 'dotenv/config'
-import { Websocket, WebsocketOptions, Structs, type WSSendParam } from '../src/index.js'
+import { connect, Structs, type WSSendParam } from '../src/index.js'
 
-const WsConfig: WebsocketOptions = {
-  protocol: 'ws',
-  host: '127.0.0.1',
-  port: 4040,
-  accessToken: process.env.NC_ACCESS_TOKEN, // 请填写你的access_token
-  reconnection: {
-    enable: true,
-    attempts: 10,
-    delay: 5000,
+// connect() 只在连接成功后返回 OneBotClient 对象；重试预算耗尽会直接抛出。
+const bot = await connect(
+  {
+    protocol: 'ws',
+    host: '127.0.0.1',
+    port: 4040,
+    accessToken: process.env.NC_ACCESS_TOKEN, // 请填写你的access_token
+    reconnection: {
+      enable: true,
+      attempts: 10,
+      delay: 5000,
+    },
   },
-}
-const bot = new Websocket(WsConfig, true)
+  true,
+)
 
 bot.on('socket.connecting', function (res) {
   console.log(`连接中#${res.reconnection.nowAttempts}`)
@@ -75,5 +78,4 @@ bot.on('request', async (event) => {
   console.dir(event, { depth: null })
 })
 
-await bot.connect()
-console.log('连接成功')
+console.log('连接成功，等待消息…')

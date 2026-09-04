@@ -1,4 +1,4 @@
-import type { Receive, SendMessageSegment, UnSafeStruct } from './Structs.js'
+import type { Receive, SendMessageSegment, UnSafeStruct } from './structs.js'
 
 const getTime = () => new Date().toLocaleString()
 

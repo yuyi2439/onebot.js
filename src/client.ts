@@ -1,7 +1,9 @@
-import type { WSSendParam } from './Interfaces.js'
-import { WebsocketBase } from './WebsocketBase.js'
+import type { OneBotClientOptions, WSSendParam } from './interfaces.js'
+import { OnebotApiError, OneBotClientBase } from './clientBase.js'
 
-export class Websocket extends WebsocketBase {
+export { OnebotApiError } from './clientBase.js'
+
+export class OneBotClient extends OneBotClientBase {
   /**
    * @onebot11
    * 发送私聊消息
@@ -1161,4 +1163,70 @@ export class Websocket extends WebsocketBase {
   del_group_album_media(params: WSSendParam['del_group_album_media']) {
     return this.send('del_group_album_media', params)
   }
+}
+
+/**
+ * 建立一条 OneBot 11 正向 WebSocket 连接。**连接成功后才返回**
+ * {@link OneBotClient} 对象；按 `options.reconnection` 的预算（默认 10 次 ×
+ * 5s）重试，全部失败则抛出异常，由调用者决定如何处理。
+ *
+ * ```ts
+ * import { connect } from 'onebot.js'
+ *
+ * try {
+ *   const bot = await connect({ baseUrl: 'ws://127.0.0.1:3001', accessToken: '' })
+ *   bot.on('message', (context) => { /* … *\/ })
+ *   const info = await bot.invoke('get_login_info', {})
+ * } catch (error) {
+ *   // 连接失败（重试预算耗尽）
+ * }
+ * ```
+ */
+export async function connect(options: OneBotClientOptions, debug = false): Promise<OneBotClient> {
+  const ws = new OneBotClient(options, debug)
+  const { enable = true, attempts = 10 } = options.reconnection ?? {}
+  // enable=false 时 onebot.js 只尝试一次，不会安排重连。
+  const maxTries = enable ? attempts : 1
+  const baseUrl
+    = 'baseUrl' in options
+      ? options.baseUrl
+      : `${options.protocol}://${options.host}:${options.port}`
+
+  return new Promise<OneBotClient>((resolve, reject) => {
+    let settled = false
+    let failures = 0
+    let lastReason: string | undefined
+    const cleanup = () => {
+      offOpen()
+      offClose()
+      offError()
+    }
+    const offOpen = ws.subscribe('socket.open', () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(ws)
+    })
+    const offClose = ws.subscribe('socket.close', () => {
+      if (settled) return
+      failures += 1
+      if (failures >= maxTries) {
+        settled = true
+        cleanup()
+        reject(new Error(`could not connect to ${baseUrl} after ${failures} attempt${failures === 1 ? '' : 's'}${lastReason ? ` (${lastReason})` : ''}`))
+      }
+    })
+    const offError = ws.subscribe('socket.error', (payload) => {
+      if (settled) return
+      const errors = (payload as { errors?: Array<{ message?: string }> }).errors
+      const first = errors?.find((item) => typeof item?.message === 'string')
+      lastReason = first?.message ?? lastReason
+    })
+    ws.connect().catch((error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      reject(error instanceof Error ? error : new Error(String(error)))
+    })
+  })
 }
