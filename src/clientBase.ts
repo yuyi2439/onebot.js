@@ -92,6 +92,16 @@ export class OneBotClientBase {
   // ==================WebSocket操作=============================
 
   /**
+   * 拼接最终的 WS URL：access_token 以 query 参数追加（OneBot 11 正向 WS 约定）。
+   * 已含 query 的 baseUrl 用 `&` 续接，token 本身做 URL 编码；token 为空则不追加。
+   */
+  #buildUrl(): string {
+    if (!this.#accessToken) return this.#baseUrl
+    const sep = this.#baseUrl.includes('?') ? '&' : '?'
+    return `${this.#baseUrl}${sep}access_token=${encodeURIComponent(this.#accessToken)}`
+  }
+
+  /**
    * await connect() 等待 ws 连接
    */
   async connect() {
@@ -102,10 +112,10 @@ export class OneBotClientBase {
 
     this.#disconnected = false
 
-    this.#connectingPromise = new Promise<void>((resolve) => {
+    this.#connectingPromise = new Promise<void>((resolve, reject) => {
       this.#eventBus.emit('socket.connecting', { reconnection: this.#reconnection })
 
-      this.#socket = new WebSocket(`${this.#baseUrl}?access_token=${this.#accessToken}`)
+      this.#socket = new WebSocket(this.#buildUrl())
 
       this.#socket.onmessage = (event) => this.#message(event.data)
 
@@ -156,9 +166,24 @@ export class OneBotClientBase {
           this.#reconnectTimer = setTimeout(async () => {
             this.#reconnectTimer = undefined
             if (this.#disconnected) return
-            await this.reconnect()
-            resolve()
+            try {
+              await this.reconnect()
+              resolve()
+            } catch (error) {
+              reject(error instanceof Error ? error : new Error(String(error)))
+            }
           }, this.#reconnection.delay)
+        } else {
+          // 重试预算耗尽（或未启用重连）：reject 挂起的 connect()，
+          // 并清掉已关闭的 socket，否则之后再调 connect() 会因
+          // `if (this.#socket) return` 直接返回，拿到永久悬挂的 promise。
+          const reason = this.#reconnection.enable
+            ? `reconnection attempts exhausted (${this.#reconnection.nowAttempts}/${this.#reconnection.attempts})`
+            : 'reconnection disabled'
+          this.#socket = undefined
+          this.#connectingPromise = undefined
+          this.#reconnection.nowAttempts = 1
+          reject(new Error(`could not connect to ${this.#baseUrl}: ${reason}`))
         }
       }
 
@@ -247,7 +272,8 @@ export class OneBotClientBase {
       if (json.post_type === 'message' || json.post_type === 'message_sent') {
         if (json.message_format === 'string') {
           // 直接处理message字段，而不是整个json对象
-          json.message = convertCQCodeToJSON(CQCodeDecode(json.message))
+          // （decode 由 convertCQCodeToJSON 内部在各分段上完成，这里不再预先整体 decode）
+          json.message = convertCQCodeToJSON(json.message)
           json.message_format = 'array'
         }
         if (typeof json.raw_message === 'string') {

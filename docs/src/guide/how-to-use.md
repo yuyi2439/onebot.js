@@ -1,6 +1,6 @@
 # 如何使用
 
-onebot.js 使用 `正向连接` 来连接到 `NapcatQQ`
+onebot.js 使用 `正向连接` 来连接 OneBot 11 实现（如 `NapCatQQ`）
 
 ## 1.初始化SDK
 

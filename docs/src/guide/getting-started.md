@@ -4,7 +4,7 @@
 
 ### 前置准备 {#prerequisites}
 
-- [Node.js](https://nodejs.org/) 20 及以上版本。
+- [Node.js](https://nodejs.org/) 22 及以上版本。
 
 onebot.js 使用 `pnpm` 作为默认包管理工具,
 
