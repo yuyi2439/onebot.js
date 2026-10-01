@@ -1207,9 +1207,20 @@ export async function connect(options: OneBotClientOptions, debug = false): Prom
       cleanup()
       resolve(ws)
     })
-    const offClose = ws.subscribe('socket.close', () => {
+    const offClose = ws.subscribe('socket.close', (payload) => {
       if (settled) return
       failures += 1
+      // A *close* (rather than an error) is how a reachable implementation
+      // rejects a connection — wrong access_token, wrong path: it accepts the
+      // socket and then drops it. The close code/reason is then the only
+      // diagnostic that exists, so keep it for the final message instead of
+      // reporting a bare "could not connect". A preceding socket.error, which
+      // usually carries the more precise cause (ECONNREFUSED), wins.
+      const detail = [
+        `close code ${payload.code}`,
+        payload.reason ? `reason ${JSON.stringify(payload.reason)}` : '',
+      ].filter(Boolean).join(', ')
+      if (!lastReason) lastReason = detail
       if (failures >= maxTries) {
         settled = true
         cleanup()

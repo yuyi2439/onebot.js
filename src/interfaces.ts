@@ -1,13 +1,14 @@
 import { NodeSegment, Receive, SendMessageSegment } from './structs.js'
 
 /**
- * 最小日志接口：与 cordis 等宿主的 logger 形状兼容，四个方法都可省略。
- * 连接生命周期告警（重连调度等）会走到这里；未提供时使用内置 logger。
+ * 调用方可以提供的日志接口：与 cordis 等宿主的 logger 形状兼容。连接生命周期、
+ * 重连调度、协议告警以及 `debug` 开关下的报文转储全部写到这里；省略时使用内置的
+ * console logger（见 `OneBotClientBase`），传入后日志去哪、长什么样完全由调用方决定。
  */
-export interface OneBotLog {
-  info?: (...args: unknown[]) => void
-  warn?: (...args: unknown[]) => void
-  debug?: (...args: unknown[]) => void
+export interface OneBotLogger {
+  info: (...args: unknown[]) => void
+  warn: (...args: unknown[]) => void
+  debug: (...args: unknown[]) => void
   error?: (...args: unknown[]) => void
 }
 
@@ -20,8 +21,8 @@ export interface OneBotClientOptionsBaseUrl {
     delay?: number
   }
   apiTimeout?: number
-  /** 连接生命周期日志（重连调度、连接成功等）；省略时使用内置 logger。 */
-  log?: OneBotLog
+  /** 日志出口（可选）：省略时使用内置的 console logger。 */
+  logger?: OneBotLogger
 }
 
 export interface OneBotClientOptionsHost {
@@ -35,8 +36,8 @@ export interface OneBotClientOptionsHost {
     delay?: number
   }
   apiTimeout?: number
-  /** 连接生命周期日志（重连调度、连接成功等）；省略时使用内置 logger。 */
-  log?: OneBotLog
+  /** 日志出口（可选）：省略时使用内置的 console logger。 */
+  logger?: OneBotLogger
 }
 
 export type OneBotClientOptions = OneBotClientOptionsBaseUrl | OneBotClientOptionsHost

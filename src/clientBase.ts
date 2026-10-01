@@ -6,14 +6,14 @@ import type {
   EventKey,
   HandlerResMap,
   OneBotClientOptions,
-  OneBotLog,
+  OneBotLogger,
   ResponseHandler,
   WSReconnection,
   WSSendParam,
   WSSendReturn,
 } from './interfaces.js'
 import { EventBus } from './eventBus.js'
-import { convertCQCodeToJSON, CQCodeDecode, logger } from './utils.js'
+import { convertCQCodeToJSON, CQCodeDecode } from './utils.js'
 
 /**
  * One failed OneBot action call. `send()` always rejects with this class, so
@@ -51,7 +51,7 @@ export class OneBotClientBase {
   #reconnection: WSReconnection
   #socket?: WebSocket
   #apiTimeout: number
-  #log: OneBotLog | undefined
+  #logger: OneBotLogger
 
   #eventBus: EventBus
   #echoMap: Map<string, ResponseHandler>
@@ -83,8 +83,10 @@ export class OneBotClientBase {
 
     this.#apiTimeout = OneBotClientOptions.apiTimeout ?? 2 * 60 * 1000
     this.#debug = debug
-    this.#log = OneBotClientOptions.log
-    this.#eventBus = new EventBus(this)
+    // 唯一的 console 兜底：调用方没传 logger 时（独立使用的最简用法）至少能
+    // 看到生命周期与 debug 转储；传了就用调用方的，库不再另外往控制台写。
+    this.#logger = OneBotClientOptions.logger ?? console
+    this.#eventBus = new EventBus(this, this.#logger)
     this.#echoMap = new Map()
     this.#disconnected = false
   }
@@ -121,7 +123,7 @@ export class OneBotClientBase {
 
       this.#socket.onopen = () => {
         this.#eventBus.emit('socket.open', { reconnection: this.#reconnection })
-        this.#log?.info?.(`onebot: connected to ${this.#baseUrl}`)
+        this.#logger.info(`onebot: connected to ${this.#baseUrl}`)
 
         this.#reconnection.nowAttempts = 1
         this.#connectingPromise = undefined
@@ -157,7 +159,7 @@ export class OneBotClientBase {
           this.#reconnection.nowAttempts < this.#reconnection.attempts
         ) {
           this.#reconnection.nowAttempts++
-          this.#log?.warn?.(
+          this.#logger.warn(
             `onebot: disconnected; retrying in ${this.#reconnection.delay}ms `
               + `(attempt ${this.#reconnection.nowAttempts}/${this.#reconnection.attempts})`,
           )
@@ -264,7 +266,7 @@ export class OneBotClientBase {
 
       // 检查数据是否看起来像有效的JSON (以 { 或 [ 开头)
       if (!(strData.trim().startsWith('{') || strData.trim().startsWith('['))) {
-        logger.warn('[onebot.js]', '[socket]', 'received non-JSON data:', strData)
+        this.#logger.warn('[onebot.js]', '[socket]', 'received non-JSON data:', strData)
         return
       }
 
@@ -282,8 +284,7 @@ export class OneBotClientBase {
       }
 
       if (this.#debug) {
-        logger.debug('[onebot.js]', '[socket]', 'receive data')
-        logger.dir(json)
+        this.#logger.debug('[onebot.js]', '[socket]', 'receive data', json)
       }
 
       if (json.echo) {
@@ -324,8 +325,10 @@ export class OneBotClientBase {
         this.#eventBus.parseMessage(json)
       }
     } catch (error) {
-      logger.warn('[onebot.js]', '[socket]', 'failed to parse JSON')
-      logger.dir(error)
+      // Error 作为唯一参数传给 logger：cordis 等宿主会把它展开成堆栈，
+      // 而不是渲染成 `{}`。
+      this.#logger.warn('[onebot.js]', '[socket]', 'failed to parse JSON')
+      this.#logger.warn(error)
       return
     }
   }
@@ -347,8 +350,7 @@ export class OneBotClientBase {
     }
 
     if (this.#debug) {
-      logger.debug('[onebot.js] send request')
-      logger.dir(message)
+      this.#logger.debug('[onebot.js] send request', message)
     }
 
     return new Promise<WSSendReturn[T]>((resolve, reject) => {

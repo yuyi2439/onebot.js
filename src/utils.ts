@@ -1,19 +1,5 @@
 import type { Receive, SendMessageSegment, UnSafeStruct } from './structs.js'
 
-const getTime = () => new Date().toLocaleString()
-
-export const logger = {
-  warn: (...args: any[]) => {
-    console.warn(`[${getTime()}]`, ...args)
-  },
-  debug: (...args: any[]) => {
-    console.debug(`[${getTime()}]`, ...args)
-  },
-  dir: (json: any) => {
-    console.dir(json, { depth: null })
-  },
-}
-
 export const SPLIT = /(?=\[CQ:)|(?<=])/
 export const CQ_TAG_REGEXP = /^\[CQ:([a-z]+)(?:,([^\]]+))?]$/
 

@@ -27,6 +27,7 @@ const bot = await connect({
   baseUrl: 'ws://127.0.0.1:3001',
   accessToken: 'your token', // 以 query 参数追加（OneBot 11 正向 WS 约定），可选
   // reconnection: { enable: true, attempts: 10, delay: 5000 }, // 自动重连，可选
+  // logger: console, // 日志出口，可选；省略时默认使用 console（自定义 logger 需带 info/warn/debug）
 })
 
 // 收消息（事件名支持 message / notice / request / meta_event 及分层子事件）

@@ -7,6 +7,9 @@ onebot.js 使用 `正向连接` 来连接 OneBot 11 实现（如 `NapCatQQ`）
 `connect` 建立正向连接：**连接成功后才返回 `OneBotClient` 对象**；按
 `reconnection` 的预算自动重试，全部失败会直接抛出异常，由调用者处理
 
+`logger` 可选：连接生命周期、重连调度、协议告警以及 `DEBUG` 模式下的报文转储都会
+写给它；省略时使用内置的 console logger。
+
 我们支持两种连接方式, 根据自己的喜好选择
 
 如果开启了 `DEBUG` 模式，那么会输出收到的所有数据
@@ -28,6 +31,8 @@ const napcat = await connect(
       attempts: 10,
       delay: 5000,
     },
+    // ↓ 日志出口(可选，未传入默认使用console)
+    logger: logger,
     // ↓ 是否开启 DEBUG 模式
   },
   false,
@@ -49,6 +54,8 @@ const napcat = await connect(
       attempts: 10,
       delay: 5000,
     },
+    // ↓ 日志出口(可选，未传入默认使用console)
+    logger: logger,
     // ↓ 是否开启 DEBUG 模式
   },
   false,

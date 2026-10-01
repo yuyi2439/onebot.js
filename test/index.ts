@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { connect, Structs, type WSSendParam } from '../src/index.js'
 
 // connect() 只在连接成功后返回 OneBotClient 对象；重试预算耗尽会直接抛出。
+// logger 可选：这里显式接到控制台（省略时也是用内置的 console logger）。
 const bot = await connect(
   {
     protocol: 'ws',
@@ -13,6 +14,7 @@ const bot = await connect(
       attempts: 10,
       delay: 5000,
     },
+    logger: console,
   },
   true,
 )
