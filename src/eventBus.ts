@@ -47,6 +47,7 @@ export class EventBus {
 
   /**
    * @deprecated 因为once方法会创建一个函数包裹，无法正确的off，所以不推荐使用once方法，建议使用subscribeOnce方法替代
+   * 将在 0.4.0 版本删除。
    */
   once<T extends EventKey>(event: T, handler: EventHandleMap[T]) {
     const onceHandler = (context: HandlerResMap[T]) => {
@@ -107,7 +108,7 @@ export class EventBus {
         this.notice(json)
         break
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown post_type: ${post_type}`)
+        this.#logger.warn('[eventBus]', `unknown post_type: ${post_type}`)
         return false
     }
 
@@ -123,7 +124,7 @@ export class EventBus {
       case 'heartbeat':
         return this.emit('meta_event.heartbeat', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown meta_event_type: ${meta_event_type}`)
+        this.#logger.warn('[eventBus]', `unknown meta_event_type: ${meta_event_type}`)
         return false
     }
   }
@@ -139,11 +140,7 @@ export class EventBus {
       case 'disable':
         return this.emit('meta_event.lifecycle.disable', json)
       default:
-        this.#logger.warn(
-          '[onebot.js]',
-          '[eventBus]',
-          `unknown meta_event.lifecycle_type: ${subType}`,
-        )
+        this.#logger.warn('[eventBus]', `unknown meta_event.lifecycle_type: ${subType}`)
         return false
     }
   }
@@ -156,7 +153,7 @@ export class EventBus {
       case 'group':
         return this.message_group(json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown message_type: ${messageType}`)
+        this.#logger.warn('[eventBus]', `unknown message_type: ${messageType}`)
         return false
     }
   }
@@ -172,7 +169,7 @@ export class EventBus {
       case 'friend':
         return this.emit('message.private.friend', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown message_private_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown message_private_type: ${subType}`)
         return false
     }
   }
@@ -186,7 +183,7 @@ export class EventBus {
       case 'normal':
         return this.emit('message.group.normal', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown message_group_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown message_group_type: ${subType}`)
         return false
     }
   }
@@ -199,7 +196,7 @@ export class EventBus {
       case 'group':
         return this.message_sent_group(json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown message_sent_type: ${messageType}`)
+        this.#logger.warn('[eventBus]', `unknown message_sent_type: ${messageType}`)
         return false
     }
   }
@@ -212,11 +209,7 @@ export class EventBus {
       case 'friend':
         return this.emit('message_sent.private.friend', json)
       default:
-        this.#logger.warn(
-          '[onebot.js]',
-          '[eventBus]',
-          `unknown message_sent_private_type: ${subType}`,
-        )
+        this.#logger.warn('[eventBus]', `unknown message_sent_private_type: ${subType}`)
         return false
     }
   }
@@ -227,7 +220,7 @@ export class EventBus {
       case 'normal':
         return this.emit('message_sent.group.normal', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown message_sent_group_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown message_sent_group_type: ${subType}`)
         return false
     }
   }
@@ -242,7 +235,7 @@ export class EventBus {
       case 'group':
         return this.request_group(json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown request_type: ${request_type}`)
+        this.#logger.warn('[eventBus]', `unknown request_type: ${request_type}`)
         return false
     }
   }
@@ -258,7 +251,7 @@ export class EventBus {
       case 'invite':
         return this.emit('request.group.invite', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown request_group_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown request_group_type: ${subType}`)
         return false
     }
   }
@@ -293,7 +286,7 @@ export class EventBus {
       case 'group_msg_emoji_like':
         return this.emit('notice.group_msg_emoji_like', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown notice_type: ${notice_type}`)
+        this.#logger.warn('[eventBus]', `unknown notice_type: ${notice_type}`)
         return false
     }
   }
@@ -306,7 +299,7 @@ export class EventBus {
       case 'unset':
         return this.emit('notice.group_admin.unset', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown notice_group_admin_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown notice_group_admin_type: ${subType}`)
         return false
     }
   }
@@ -319,7 +312,7 @@ export class EventBus {
       case 'lift_ban':
         return this.emit('notice.group_ban.lift_ban', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown notice_group_ban_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown notice_group_ban_type: ${subType}`)
         return false
     }
   }
@@ -334,11 +327,7 @@ export class EventBus {
       case 'kick_me':
         return this.emit('notice.group_decrease.kick_me', json)
       default:
-        this.#logger.warn(
-          '[onebot.js]',
-          '[eventBus]',
-          `unknown notice_group_decrease_type: ${subType}`,
-        )
+        this.#logger.warn('[eventBus]', `unknown notice_group_decrease_type: ${subType}`)
         return false
     }
   }
@@ -351,11 +340,7 @@ export class EventBus {
       case 'invite':
         return this.emit('notice.group_increase.invite', json)
       default:
-        this.#logger.warn(
-          '[onebot.js]',
-          '[eventBus]',
-          `unknown notice_group_increase_type: ${subType}`,
-        )
+        this.#logger.warn('[eventBus]', `unknown notice_group_increase_type: ${subType}`)
         return false
     }
   }
@@ -368,7 +353,7 @@ export class EventBus {
       case 'delete':
         return this.emit('notice.essence.delete', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown notice_essence_type: ${subType}`)
+        this.#logger.warn('[eventBus]', `unknown notice_essence_type: ${subType}`)
         return false
     }
   }
@@ -387,7 +372,7 @@ export class EventBus {
       case 'profile_like':
         return this.emit('notice.notify.profile_like', json)
       default:
-        this.#logger.warn('[onebot.js]', '[eventBus]', `unknown notice_notify_type: ${sub_type}`)
+        this.#logger.warn('[eventBus]', `unknown notice_notify_type: ${sub_type}`)
         return false
     }
   }

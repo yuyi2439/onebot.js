@@ -123,7 +123,7 @@ export class OneBotClientBase {
 
       this.#socket.onopen = () => {
         this.#eventBus.emit('socket.open', { reconnection: this.#reconnection })
-        this.#logger.info(`onebot: connected to ${this.#baseUrl}`)
+        this.#logger.info(`connected to ${this.#baseUrl}`)
 
         this.#reconnection.nowAttempts = 1
         this.#connectingPromise = undefined
@@ -160,7 +160,7 @@ export class OneBotClientBase {
         ) {
           this.#reconnection.nowAttempts++
           this.#logger.warn(
-            `onebot: disconnected; retrying in ${this.#reconnection.delay}ms `
+            `disconnected; retrying in ${this.#reconnection.delay}ms `
               + `(attempt ${this.#reconnection.nowAttempts}/${this.#reconnection.attempts})`,
           )
 
@@ -266,7 +266,7 @@ export class OneBotClientBase {
 
       // 检查数据是否看起来像有效的JSON (以 { 或 [ 开头)
       if (!(strData.trim().startsWith('{') || strData.trim().startsWith('['))) {
-        this.#logger.warn('[onebot.js]', '[socket]', 'received non-JSON data:', strData)
+        this.#logger.warn('[socket]', 'received non-JSON data:', strData)
         return
       }
 
@@ -284,7 +284,7 @@ export class OneBotClientBase {
       }
 
       if (this.#debug) {
-        this.#logger.debug('[onebot.js]', '[socket]', 'receive data', json)
+        this.#logger.debug('[socket]', 'receive data', json)
       }
 
       if (json.echo) {
@@ -325,9 +325,9 @@ export class OneBotClientBase {
         this.#eventBus.parseMessage(json)
       }
     } catch (error) {
-      // Error 作为唯一参数传给 logger：cordis 等宿主会把它展开成堆栈，
-      // 而不是渲染成 `{}`。
-      this.#logger.warn('[onebot.js]', '[socket]', 'failed to parse JSON')
+      // Error 作为唯一参数传给 logger：把它单独交给 logger 的地方通常能展开成
+      // 堆栈，而不是渲染成 `{}`。
+      this.#logger.warn('[socket]', 'failed to parse JSON')
       this.#logger.warn(error)
       return
     }
@@ -350,7 +350,7 @@ export class OneBotClientBase {
     }
 
     if (this.#debug) {
-      this.#logger.debug('[onebot.js] send request', message)
+      this.#logger.debug('send request', message)
     }
 
     return new Promise<WSSendReturn[T]>((resolve, reject) => {
@@ -413,6 +413,7 @@ export class OneBotClientBase {
   /**
    * 注册一次性监听方法，触发一次后自动解除监听
    * @deprecated 因为once方法会创建一个函数包裹，无法正确的off，所以不推荐使用once方法，建议使用subscribeOnce方法替代
+   * 将在 0.4.0 版本删除。
    * @param event
    * @param handle
    * @returns 返回自身引用

@@ -1,9 +1,11 @@
 import { NodeSegment, Receive, SendMessageSegment } from './structs.js'
 
 /**
- * 调用方可以提供的日志接口：与 cordis 等宿主的 logger 形状兼容。连接生命周期、
- * 重连调度、协议告警以及 `debug` 开关下的报文转储全部写到这里；省略时使用内置的
- * console logger（见 `OneBotClientBase`），传入后日志去哪、长什么样完全由调用方决定。
+ * 调用方可以提供的日志接口。连接生命周期、重连调度、协议告警以及 `debug` 开关下
+ * 的报文转储全部写到这里；省略时使用内置的 console logger（见`OneBotClientBase`）。
+ * 只要带 `info` / `warn` / `debug`（可选 `error`）即可，日志去哪、长什么样完全由
+ * 调用方决定。文案里不写库名：logger 的持有方一般已经给每行打上来源标签，库再
+ * 自报一次就是重复。
  */
 export interface OneBotLogger {
   info: (...args: unknown[]) => void
