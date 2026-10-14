@@ -1,0 +1,12 @@
+{
+  // 单独给测试用的配置：根 tsconfig 只管 src/（rootDir=./src、要产出 dist），
+  // 所以测试文件和 vitest.config.ts 平时不在类型检查范围内。这个配置只做检查、
+  // 不产出文件，由 `pnpm typecheck` 一并在 CI 里跑。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "outDir": "./dist"
+  },
+  "include": ["src", "test", "vitest.config.ts"]
+}

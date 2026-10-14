@@ -1,0 +1,74 @@
+# Run the unit suite on pull requests, and let the release workflow reuse it.
+#
+# The suite is hermetic: every client test starts its own loopback WebSocket
+# server, so it needs no OneBot/NapCat implementation and no outside network.
+# `pnpm test:smoke` (test/smoke.ts) is the manual one that DOES need a live
+# server — it is deliberately not part of CI.
+#
+# Coverage is uploaded to Codecov, which powers the badge in README.md, using
+# the CODECOV_TOKEN repository secret. The real gate is `pnpm test:coverage`:
+# its thresholds in vitest.config.ts fail the build, and that is what has to be
+# green before a release.
+#
+# Direct commits do NOT run this workflow — only pull requests do. Releases are
+# covered anyway: `.github/workflows/publish.yml` calls this workflow through
+# `workflow_call`, and path filters never apply to that call, so a release tag
+# cannot skip the tests.
+
+name: test
+
+on:
+  pull_request:
+    # Documentation-only pull requests skip the run. Caveat: the check then
+    # reports as "skipped", which does NOT satisfy a required status check in
+    # branch protection, so do not mark this workflow as required if you want
+    # docs-only pull requests to be mergeable.
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test with coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore

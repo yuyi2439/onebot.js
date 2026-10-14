@@ -1,5 +1,7 @@
 # onebot.js
 
+[![coverage](https://codecov.io/gh/yuyi2439/onebot.js/branch/main/graph/badge.svg)](https://codecov.io/gh/yuyi2439/onebot.js)
+
 OneBot 11 正向 WebSocket 客户端 SDK（TypeScript、仅 ESM）。
 
 以 OneBot 11 标准协议为主，同时附带 NapCat 扩展 API（与标准协议不冲突，故直接收录）。注意：扩展 API 仅在 NapCat 上保证可用，其他实现调用时可能报错，兼容边界后续会改进。
@@ -54,6 +56,10 @@ await bot.disconnect() // 主动断开
 ```
 
 更多用法见 [docs](./docs/src/guide/what-is-onebot-js.md)：[如何使用](./docs/src/guide/how-to-use.md) · [绑定事件](./docs/src/guide/bind-event.md) · [调用接口](./docs/src/guide/call-api.md) · [结构体构造器](./docs/src/guide/struct-maker.md)。
+
+## 贡献
+
+开发环境、常用命令、测试、CI 与发布流程见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 文档
 
