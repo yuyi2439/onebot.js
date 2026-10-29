@@ -814,6 +814,38 @@ export class OneBotClient extends OneBotClientBase {
 
   /**
    * @napcat
+   * 获取收藏表情详情（包含 resId 与 md5）
+   */
+  fetch_custom_face_detail(params?: WSSendParam['fetch_custom_face_detail']) {
+    return this.send('fetch_custom_face_detail', params ?? {})
+  }
+
+  /**
+   * @napcat
+   * 添加收藏表情；file 必须是 NapCat 所在机器可读取的本地文件路径
+   */
+  add_custom_face(params: WSSendParam['add_custom_face']) {
+    return this.send('add_custom_face', params)
+  }
+
+  /**
+   * @napcat
+   * 删除收藏表情；通过 res_id、id 或 ids 指定资源，不能仅提供 md5
+   */
+  delete_custom_face(params: WSSendParam['delete_custom_face']) {
+    return this.send('delete_custom_face', params)
+  }
+
+  /**
+   * @napcat
+   * 修改收藏表情描述
+   */
+  set_custom_face_desc(params: WSSendParam['set_custom_face_desc']) {
+    return this.send('set_custom_face_desc', params)
+  }
+
+  /**
+   * @napcat
    * 获取表情回复
    */
   fetch_emoji_like(params: WSSendParam['fetch_emoji_like']) {

@@ -949,7 +949,33 @@ export type WSSendParam = {
   get_recent_contact: { count?: number }
   _mark_all_as_read: {}
   get_profile_like: {}
-  fetch_custom_face: { count?: number }
+  fetch_custom_face: { count?: number | string }
+  fetch_custom_face_detail: { count?: number | string }
+  add_custom_face: {
+    /** NapCat 所在机器的本地文件路径，不支持 URL 或 base64。 */
+    file: string
+    emoji_id?: string | number
+    package_id?: string | number
+    file_name?: string
+    file_size?: string | number
+    md5?: string
+    is_mark_face?: boolean
+    is_origin?: boolean
+  }
+  delete_custom_face: {
+    /** fetch_custom_face_detail 返回的 resId，支持批量删除。 */
+    res_id?: string | string[]
+    id?: string | string[]
+    ids?: string[]
+    /** 上游接受此字段但不用于删除，仍须提供资源 ID。 */
+    md5?: string | string[]
+  }
+  set_custom_face_desc: {
+    emoji_id: number | string
+    res_id: string
+    md5: string
+    desc: string
+  }
   fetch_emoji_like: {
     message_id: number
     emojiId: string
@@ -1671,6 +1697,31 @@ export type WSSendReturn = {
     }
   }[]
   fetch_custom_face: string[]
+  fetch_custom_face_detail: {
+    uin: string
+    emoId: number
+    emoPath: string
+    isExist: boolean
+    resId: string
+    url: string
+    md5: string
+    emoOriginalPath: string
+    thumbPath: string
+    RomaingType: string
+    isAPNG: boolean
+    isMarkFace: boolean
+    eId: string
+    epId: string
+    ocrWord: string
+    modifyWord: string
+    exposeNum: number
+    clickNum: number
+    desc: string
+  }[]
+  // 上游直接返回 native 操作结果，未定义稳定的响应结构。
+  add_custom_face: unknown
+  delete_custom_face: unknown
+  set_custom_face_desc: unknown
   fetch_emoji_like: {
     result: 0
     errMsg: string

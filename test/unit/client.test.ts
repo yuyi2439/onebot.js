@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { connect, OneBotClient } from '../../src/client.js'
 import type { OneBotClientBase } from '../../src/clientBase.js'
+import type { WSSendParam, WSSendReturn } from '../../src/interfaces.js'
 import { createMockLogger, findClosedPort, silentLogger, TestServer } from '../helpers/index.js'
 
 const servers: TestServer[] = []
@@ -179,7 +180,9 @@ describe('OneBotClient action surface', () => {
     await client.get_recent_contact()
     await client.get_recent_contact({ count: 1 } as any)
     await client.fetch_custom_face()
-    await client.fetch_custom_face([1] as any)
+    await client.fetch_custom_face({ count: '10' })
+    await client.fetch_custom_face_detail()
+    await client.fetch_custom_face_detail({ count: 10 })
     await client.get_doubt_friends_add_request()
     await client.get_doubt_friends_add_request({ count: 1 } as any)
 
@@ -191,10 +194,68 @@ describe('OneBotClient action surface', () => {
       { action: 'get_recent_contact', params: {} },
       { action: 'get_recent_contact', params: { count: 1 } },
       { action: 'fetch_custom_face', params: {} },
-      { action: 'fetch_custom_face', params: [1] },
+      { action: 'fetch_custom_face', params: { count: '10' } },
+      { action: 'fetch_custom_face_detail', params: {} },
+      { action: 'fetch_custom_face_detail', params: { count: 10 } },
       { action: 'get_doubt_friends_add_request', params: {} },
       { action: 'get_doubt_friends_add_request', params: { count: 1 } },
     ])
+  })
+
+  it('preserves custom face paths, optional metadata, aliases and explicit false flags', async () => {
+    const { client, calls } = stubClient()
+    const add: WSSendParam['add_custom_face'] = {
+      file: '/napcat/收藏表情.png', emoji_id: '0001', package_id: 0,
+      file_name: '收藏表情.png', file_size: '123', md5: 'image-md5',
+      is_mark_face: false, is_origin: false,
+    }
+    await client.add_custom_face(add)
+    expect(calls[0]).toEqual({ action: 'add_custom_face', params: add })
+    expect(calls[0].params).toBe(add)
+
+    const deletes: WSSendParam['delete_custom_face'][] = [
+      { res_id: 'res-1' }, { res_id: ['res-1', 'res-2'] },
+      { id: 'res-1' }, { id: ['res-1', 'res-2'] },
+      { ids: ['res-1', 'res-2'], md5: ['md5-1', 'md5-2'] },
+    ]
+    for (const params of deletes) {
+      await client.delete_custom_face(params)
+      expect(calls.at(-1)).toEqual({ action: 'delete_custom_face', params })
+      expect(calls.at(-1)?.params).toBe(params)
+    }
+
+    const desc: WSSendParam['set_custom_face_desc'] = {
+      emoji_id: '0001', res_id: 'res-1', md5: 'image-md5', desc: '',
+    }
+    await client.set_custom_face_desc(desc)
+    expect(calls.at(-1)).toEqual({ action: 'set_custom_face_desc', params: desc })
+    expect(calls.at(-1)?.params).toBe(desc)
+  })
+
+  it('round-trips custom face details and native operation results unchanged', async () => {
+    const server = await startServer()
+    const details: WSSendReturn['fetch_custom_face_detail'] = [{
+      uin: '10001', emoId: 1, emoPath: '/napcat/face.png', isExist: true,
+      resId: 'res-1', url: 'https://example.com/face.png', md5: 'image-md5',
+      emoOriginalPath: '/napcat/original.png', thumbPath: '/napcat/thumb.png',
+      RomaingType: '0', isAPNG: true, isMarkFace: false, eId: '1', epId: '0',
+      ocrWord: '', modifyWord: '', exposeNum: 0, clickNum: 0, desc: '测试',
+    }]
+    const results: Record<string, unknown> = {
+      fetch_custom_face: [details[0].url], fetch_custom_face_detail: details,
+      add_custom_face: { result: 0, nativeField: ['res-1'] },
+      delete_custom_face: null, set_custom_face_desc: { result: 0 },
+    }
+    server.onFrame = (frame, socket) => {
+      server.reply(frame.echo, { status: 'ok', retcode: 0, data: results[frame.action] }, socket)
+    }
+    const bot = track(await connect({ baseUrl: server.url, logger: createMockLogger() }))
+    await expect(bot.fetch_custom_face()).resolves.toEqual(results.fetch_custom_face)
+    await expect(bot.fetch_custom_face_detail({ count: '10' })).resolves.toEqual(details)
+    await expect(bot.add_custom_face({ file: '/napcat/face.png' })).resolves.toEqual(results.add_custom_face)
+    await expect(bot.delete_custom_face({ ids: ['res-1'] })).resolves.toBeNull()
+    await expect(bot.set_custom_face_desc({ emoji_id: 1, res_id: 'res-1', md5: 'image-md5', desc: '新描述' }))
+      .resolves.toEqual(results.set_custom_face_desc)
   })
 
   it('sends parameterless actions with an empty object', async () => {
